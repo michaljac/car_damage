@@ -10,7 +10,7 @@ def load_size(img_root, file_name):
 def fix_split(classes, in_ann, img_root, out_ann, cat_id_map, drop_empty=False):
     
     # Load the JSON and image info
-    js = json.load(open(in_ann))
+    js = json.load(open(in_ann[0]))
 
     # build lookup map
     name2id = {c['name']: c['id'] for c in js['categories']}
@@ -58,7 +58,8 @@ def fix_split(classes, in_ann, img_root, out_ann, cat_id_map, drop_empty=False):
     print(f"Saved {out_ann} | imgs={len(js['images'])} anns={len(out_anns)}")
 
 
-if __name__ == "main":
+
+if __name__ == '__main__':
 
     # Load yaml config file 
     with open("configs/preprocess.yaml") as f:
@@ -68,8 +69,8 @@ if __name__ == "main":
     classes = cfg['classes']
 
     # should do it also for val and test
-    in_ann = '/Data/annotations/annotations_train.json',
-    img_root = '/Data/images'
-    out_ann = '/Data/annotations/annotations_train_fixed.json'
+    in_ann = '/Data/annotations/annotations_val.json',
+    img_root = '/Data/val2017'
+    out_ann = '/Data/annotations/annotations_val_fixed.json'
     
     fix_split(classes, in_ann, img_root, out_ann, cat_id_map)
