@@ -1,0 +1,107 @@
+# Data
+input_data_type: images # video / images
+data_path: /Data/Carmel/Scorpion/Day/train/Yori_India_Nov_24/test #/Data/Raw_Unlabeled/Carmel/Scorpion/Day/Yori_India_Nov_24 #/Nagmash_GZ_data/Nagmash_raw/Nagmash03_GAField_May2025/frames/158/31_05_2025/batch_1
+ # /Nagmash_GZ_data/Nagma/Data/Raw_Unlabeled/Soi/external_dataset/Day/yt_videossh_raw/test 
+output_gt_path: /Data/Soi/bat_hefer_Dec_2024/Night/new # /Data/Nagmash_GZ_data/Nagmash_tagged/Nagmash03_GAField_May2025/Night/new/215/24_05_2025
+classes_dict: {0: "dent", 1: "scratch", 2: "crack", 3: "glass shatter", 4: "lamp broken", 5: "tire flat"}
+['dent','scratch','crack','glass shatter','lamp broken','tire flat']
+classes_classifier: {}
+relevant_classes_dict: classes_dict
+with_labels: True  # for images without labels 
+
+# Parameters
+video_step: 5
+conf: 0.3 # yolo confidence threshold
+detr_conf: 0.3 # detr2 confidence threshold
+iou: 0.33 # overlap detections
+iou_models: 0.5
+iou_th_rm_bboxes: 0.6
+filter_overlapping: False
+include_background: True
+
+# General
+with_labels: False
+background: False
+anno_key: tagged_anno
+tags: ['day', 'night', 'buildings', 'open_field', 'cam_type']
+selected_tag: []
+label_field: predictions
+url: http://localhost:8080
+launch_editor: True
+cleanup: False
+detect_blurry_images: True
+new_session: False
+resume_batch_dir: False # results / False 
+resume_session: False         # Resume exsiting session
+zip_files_dir: 'results'
+tagging_time_in_seconds: 0.5
+temp_sessions_dir: temp_sessions
+saved_sessions_dir: saved_sessions
+external_labeling_dir: external_labeling
+filter_session_key: []
+fix_labels: True
+label_app: cvat
+ #/Nagmash_GZ_data/Nagmash_tagged/Nagmash03_GAField_May2025/Day/new
+
+# # fifty one
+default_ml_backend: torch
+default_app_address: localhostrun_inference
+default_app_port: 5151
+do_not_track: 1
+logging_level: INFO  # DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+
+# Super Resolution
+Super_resolution: False                # Activate Super resolution
+sr_debug_mode: False
+sr_crops_dir: 'results/sr_crops'
+sr_model_name: ninab0
+sr_scale: 2
+sr_iou_thresh: 0.2
+sr_det_model_name: detr2_rcnn_X_101   # 2fb72.weights / detr2_rcnn_X_101   # SR detector model name 
+super_res_conf: 0.15                  # SR detector conf 
+min_iou_match_thresh: 0.1             # min iou to match missing tracks with sr dets
+min_dist_thresh: 60
+crop_fraction: 0.25
+class_agnostic: True
+
+# SR Simple Tracker
+max_frames_age: 4
+min_init_conf: 0.4
+min_sequence: 2
+
+# image_enhancement params
+image_enhancement: False
+min_object_thresh: 1
+mean_conf_thresh: 0.45
+
+# crops classifier 
+crops_classifier: False
+# classifier_model_path: 'classification/models/best_model_v1.pth'
+classifier_target_image_size: (100, 100)
+classifier_classes: [person, vehicle, background]
+
+# Darknet
+meta_path: config/2cl.data
+namesfile: config/human_vehicle.names 
+darknet_nms_thresh: 0.5
+
+# Yolov8
+agnostic_nms: False
+
+
+# Yolo v7
+# names: []
+# detections_dict: {}
+
+# Paths
+paths_windows:
+  fo_dir: '~\.fiftyone'
+  extracted_folder_path: 'obj_train_data\'
+  zip_file_path: '~\Downloads\cvat_output.zip'
+  metadata_path: '\fo_metadata\'
+paths_linux:
+    fo_dir: '~/.fiftyone'
+    extracted_folder_path : 'obj_train_data/'
+    zip_file_path: /Downloads/cvat_output.zip #'~/Downloads/cvat_output.zip'
+    metadata_path: '/fo_metadata/'
