@@ -14,16 +14,26 @@ RUN apt-get update && apt-get install -y \
     git \
     wget \
     curl \
+    gnupg \
     build-essential \
     libglib2.0-0 \
+    libglib2.0-dev \
     libsm6 \
     libxext6 \
     libxrender-dev \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
+    libgl1 \
+    libgomp1 \
     libgtk-3-dev \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
+
+# Install MongoDB
+RUN curl -L https://fastdl.mongodb.org/linux/mongodb-linux-x86_64-debian12-7.0.5.tgz -o /tmp/mongodb.tgz && \
+    tar -xzf /tmp/mongodb.tgz -C /tmp/ && \
+    cp /tmp/mongodb-linux-x86_64-debian12-7.0.5/bin/* /usr/local/bin/ && \
+    rm -rf /tmp/mongodb* && \
+    mkdir -p /data/db && \
+    chmod -R 777 /data/db
 
 # Upgrade pip and install wheel
 RUN pip install --upgrade pip setuptools wheel
