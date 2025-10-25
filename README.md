@@ -40,9 +40,9 @@ Despite this, **RTMDet-s consistently outperformed other models**, particularly 
 ---
 
 ### **4. Challenges and Limitations**
-Training was performed on **CPU** due to the absence of a local GPU.  
+Training was performed on **cuda** due to the absence of a local GPU.  
 Although experiments on **Google Colab** and **Kaggle** were attempted, integration between **PyTorch** and **MMDetection** caused dependency conflicts that prevented stable GPU acceleration.  
-Consequently, all training and inference were executed on CPU-based models, leading to **slower training** and **reduced model performance** compared to GPU setups.
+Consequently, all training and inference were executed on cuda-based models, leading to **slower training** and **reduced model performance** compared to GPU setups.
 
 ---
 
@@ -53,7 +53,7 @@ Consequently, all training and inference were executed on CPU-based models, lead
 | **ROI Strategy** | Dynamic car ROI cropping during training/inference |
 | **Transform File** | `mmdetection/mmdet/datasets/transforms/car_roi_crop.py` |
 | **Evaluation Metrics** | Precision, Recall, mAP (per category) |
-| **Limitation** | CPU-only execution due to missing GPU support |
+| **Limitation** | cuda-only execution due to missing GPU support |
 
 ---
 

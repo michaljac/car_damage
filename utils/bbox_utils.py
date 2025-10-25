@@ -55,7 +55,7 @@ def adapt_bboxes_to_original_image(
     # Get bboxes (support both tensor and numpy)
     bboxes = pred_instances.bboxes
     if isinstance(bboxes, torch.Tensor):
-        bboxes = bboxes.cpu().numpy()
+        bboxes = bboxes.cuda().numpy()
     
     # Step 1: Handle scale factor from MMDetection (usually already applied)
     # The inference_detector() function in MMDetection automatically rescales

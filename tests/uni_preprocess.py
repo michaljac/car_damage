@@ -72,7 +72,7 @@ MIN_CROP_SIZE = 100
 # Test settings
 PERCENT_TO_VISUALIZE = 0.1  # 1% of dataset
 MAX_IMAGES = 100  # Maximum images to process
-DEVICE = 'cpu'  # 'cuda:0' or 'cpu'
+DEVICE = 'cuda'  # 'cuda:0' or 'cuda'
 
 
 # ============================================================================
@@ -127,9 +127,9 @@ def detect_vehicle(detector, img, score_threshold=0.3):
     result = inference_detector(detector, img)
     
     pred_instances = result.pred_instances
-    bboxes = pred_instances.bboxes.cpu().numpy()
-    scores = pred_instances.scores.cpu().numpy()
-    labels = pred_instances.labels.cpu().numpy()
+    bboxes = pred_instances.bboxes.cuda().numpy()
+    scores = pred_instances.scores.cuda().numpy()
+    labels = pred_instances.labels.cuda().numpy()
     
     # Filter for vehicle classes and score threshold
     valid_mask = np.zeros(len(labels), dtype=bool)

@@ -198,7 +198,7 @@ test_dataloader = dict(
                 padding_ratio=0.1,
                 square_crop=True,
                 min_crop_size=100,
-                device='cpu',
+                device='cuda',
                 fallback_to_original=True,
                 vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
             ),
@@ -257,7 +257,7 @@ test_pipeline = [
         padding_ratio=0.1,
         square_crop=True,
         min_crop_size=100,
-        device='cpu',
+        device='cuda',
         fallback_to_original=True,
         vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
     ),
@@ -316,7 +316,7 @@ train_dataloader = dict(
                 padding_ratio=0.1,
                 square_crop=True,
                 min_crop_size=100,
-                device='cpu',
+                device='cuda',
                 fallback_to_original=True,
                 vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
             ),
@@ -394,7 +394,7 @@ train_pipeline = [
         padding_ratio=0.1,
         square_crop=True,
         min_crop_size=100,
-        device='cpu',
+        device='cuda',
         fallback_to_original=True,
         vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
     ),
@@ -573,7 +573,7 @@ val_dataloader = dict(
                 padding_ratio=0.1,
                 square_crop=True,
                 min_crop_size=100,
-                device='cpu',
+                device='cuda',
                 fallback_to_original=True,
                 vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
             ),

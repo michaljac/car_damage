@@ -69,7 +69,7 @@ class CarROICrop(BaseTransform):
             Default: True
         min_crop_size (int): Minimum crop size (prevents too small crops).
             Default: 100
-        device (str): Device to run detector on ('cuda' or 'cpu').
+        device (str): Device to run detector on ('cuda' or 'cuda').
             Default: 'cuda:0'
         fallback_to_original (bool): If no vehicle detected, use original image.
             Default: True
@@ -177,9 +177,9 @@ class CarROICrop(BaseTransform):
             
             # Extract predictions
             pred_instances = result.pred_instances
-            bboxes = pred_instances.bboxes.cpu().numpy()  # [N, 4]
-            scores = pred_instances.scores.cpu().numpy()  # [N]
-            labels = pred_instances.labels.cpu().numpy()  # [N]
+            bboxes = pred_instances.bboxes.cuda().numpy()  # [N, 4]
+            scores = pred_instances.scores.cuda().numpy()  # [N]
+            labels = pred_instances.labels.cuda().numpy()  # [N]
             
             # Filter by vehicle classes and score threshold
             vehicle_mask = np.isin(labels, self.vehicle_classes)
@@ -251,28 +251,62 @@ class CarROICrop(BaseTransform):
             crop_w = crop_x2 - crop_x1
             crop_h = crop_y2 - crop_y1
             
-            if crop_w > crop_h:
-                # Expand height to match width
-                diff = crop_w - crop_h
-                crop_y1 = max(0, crop_y1 - diff / 2)
-                crop_y2 = min(H, crop_y2 + diff / 2)
-                # Adjust if we hit boundary
-                if crop_y2 - crop_y1 < crop_w:
-                    if crop_y1 == 0:
-                        crop_y2 = min(H, crop_y1 + crop_w)
-                    else:
-                        crop_y1 = max(0, crop_y2 - crop_w)
-            else:
-                # Expand width to match height
-                diff = crop_h - crop_w
-                crop_x1 = max(0, crop_x1 - diff / 2)
-                crop_x2 = min(W, crop_x2 + diff / 2)
-                # Adjust if we hit boundary
-                if crop_x2 - crop_x1 < crop_h:
-                    if crop_x1 == 0:
-                        crop_x2 = min(W, crop_x1 + crop_h)
-                    else:
-                        crop_x1 = max(0, crop_x2 - crop_h)
+            # Determine target size (use the smaller dimension to ensure it fits)
+            target_size = max(crop_w, crop_h)
+            
+            # Center the crop
+            center_x = (crop_x1 + crop_x2) / 2
+            center_y = (crop_y1 + crop_y2) / 2
+            
+            # Calculate new crop bounds
+            new_x1 = center_x - target_size / 2
+            new_x2 = center_x + target_size / 2
+            new_y1 = center_y - target_size / 2
+            new_y2 = center_y + target_size / 2
+            
+            # Adjust if crop exceeds image boundaries
+            # Shift horizontally if needed
+            if new_x1 < 0:
+                shift = -new_x1
+                new_x1 = 0
+                new_x2 = min(W, new_x2 + shift)
+            elif new_x2 > W:
+                shift = new_x2 - W
+                new_x2 = W
+                new_x1 = max(0, new_x1 - shift)
+            
+            # Shift vertically if needed
+            if new_y1 < 0:
+                shift = -new_y1
+                new_y1 = 0
+                new_y2 = min(H, new_y2 + shift)
+            elif new_y2 > H:
+                shift = new_y2 - H
+                new_y2 = H
+                new_y1 = max(0, new_y1 - shift)
+            
+            # If still can't fit a perfect square (image too small), use largest possible square
+            actual_w = new_x2 - new_x1
+            actual_h = new_y2 - new_y1
+            
+            if actual_w != actual_h:
+                # Use the smaller dimension to ensure perfect square within bounds
+                final_size = min(actual_w, actual_h)
+                
+                # Re-center with the constrained size
+                if actual_w > actual_h:
+                    # Width is larger, reduce it
+                    center_x = (new_x1 + new_x2) / 2
+                    new_x1 = center_x - final_size / 2
+                    new_x2 = center_x + final_size / 2
+                else:
+                    # Height is larger, reduce it
+                    center_y = (new_y1 + new_y2) / 2
+                    new_y1 = center_y - final_size / 2
+                    new_y2 = center_y + final_size / 2
+            
+            crop_x1, crop_x2 = new_x1, new_x2
+            crop_y1, crop_y2 = new_y1, new_y2
         
         # Ensure minimum crop size
         crop_w = crop_x2 - crop_x1
@@ -394,7 +428,7 @@ class CarROICrop(BaseTransform):
                 
                 # Handle different bbox formats (numpy array or tensor)
                 if isinstance(gt_bboxes, torch.Tensor):
-                    gt_bboxes = gt_bboxes.cpu().numpy()
+                    gt_bboxes = gt_bboxes.cuda().numpy()
                 
                 # Convert from any format to [x1, y1, x2, y2] if needed
                 # Assuming gt_bboxes are already in [x1, y1, x2, y2] format (standard in MMDet)
@@ -412,7 +446,7 @@ class CarROICrop(BaseTransform):
                 if 'gt_labels' in results:
                     gt_labels = results['gt_labels']
                     if isinstance(gt_labels, torch.Tensor):
-                        gt_labels = gt_labels.cpu().numpy()
+                        gt_labels = gt_labels.cuda().numpy()
                     results['gt_labels'] = gt_labels[valid_mask]
                 
                 # Update other annotation fields if they exist
@@ -421,7 +455,7 @@ class CarROICrop(BaseTransform):
                         value = results[key]
                         if isinstance(value, (np.ndarray, torch.Tensor)):
                             if isinstance(value, torch.Tensor):
-                                value = value.cpu().numpy()
+                                value = value.cuda().numpy()
                             if len(value) == len(valid_mask):
                                 results[key] = value[valid_mask]
             

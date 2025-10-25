@@ -24,7 +24,7 @@ except Exception as e:
     sys.exit(1)
 
 # Test 2: Can we instantiate it?
-print("\n[TEST 2] Instantiating CarROICrop with CPU device...")
+print("\n[TEST 2] Instantiating CarROICrop with cuda device...")
 try:
     transform = CarROICrop(
         detector_config='mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py',

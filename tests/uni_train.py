@@ -6,7 +6,7 @@ This script:
 1. Validates dataset paths (train + val)
 2. Validates config parameters
 3. Tests CarROICrop transform loading
-4. Runs training for a few epochs (CPU mode for testing)
+4. Runs training for a few epochs (cuda mode for testing)
 5. Monitors loss and mAP via WandB
 
 Usage:
@@ -36,7 +36,7 @@ WORK_DIR = 'work_dirs/test_train_car_roi'
 
 # Training settings
 NUM_EPOCHS = 5  # Just a few epochs for testing
-DEVICE = 'cpu'  # Use GPU for training (CarROICrop needs GPU)
+DEVICE = 'cuda'  # Use GPU for training (CarROICrop needs GPU)
 BATCH_SIZE = 8  # Batch size for GPU
 
 # Resume from checkpoint (if exists)
@@ -176,7 +176,7 @@ def test_carroicrop_import():
             detector_checkpoint='https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
             score_threshold=0.3,
             padding_ratio=0.05,
-            device='cpu'
+            device='cuda'
         )
         print("✓ CarROICrop instantiated successfully")
         print(f"  {transform}")
@@ -241,7 +241,7 @@ def run_training_test():
     cfg.work_dir = WORK_DIR
     cfg.train_dataloader.batch_size = BATCH_SIZE
     cfg.val_dataloader.batch_size = BATCH_SIZE
-    cfg.train_dataloader.num_workers = 0  # CPU mode
+    cfg.train_dataloader.num_workers = 0  # cuda mode
     cfg.val_dataloader.num_workers = 0
     
     # Update CarROICrop device to match

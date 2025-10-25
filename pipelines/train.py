@@ -19,10 +19,10 @@ from mmengine.runner import Runner
 # ============================================================================
 
 # Config file path
-CONFIG_FILE = 'configs/rtmdet_tiny_car_roi.py'
+CONFIG_FILE = '/car_damage/configs/rtmdet_tiny_car_roi.py'
 
 # Working directory for checkpoints and logs
-WORK_DIR = 'work_dirs/rtmdet_car_damage'
+WORK_DIR = '/car_damage/work_dirs/rtmdet_car_damage'
 
 # Training settings
 NUM_EPOCHS = 50  # Number of training epochs
