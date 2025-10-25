@@ -7,8 +7,8 @@ import os
 import sys
 
 # Add paths to load custom transforms and mmdetection
-sys.path.insert(0, '/workspace')
-sys.path.insert(0, 'mmdetection')
+sys.path.insert(0, '/car_damage')
+sys.path.insert(0, '/car_damage/mmdetection')
 
 from mmengine.config import Config
 from mmengine.runner import Runner

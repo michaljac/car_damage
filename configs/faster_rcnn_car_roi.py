@@ -11,7 +11,7 @@ _base_ = [
 
 # Custom imports to load CarROICrop transform
 custom_imports = dict(
-    imports=['mmdetection.mmdet.datasets.transforms.car_roi_crop'],
+    imports=['mmdet.datasets.transforms.car_roi_crop'],
     allow_failed_imports=False
 )
 

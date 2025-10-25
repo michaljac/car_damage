@@ -17,8 +17,8 @@ import os
 import sys
 
 # Add paths
-sys.path.insert(0, '/workspace')
-sys.path.insert(0, 'mmdetection')
+sys.path.insert(0, '/car_damage')
+sys.path.insert(0, '/car_damage/mmdetection')
 
 from mmengine.config import Config
 from mmengine.runner import Runner

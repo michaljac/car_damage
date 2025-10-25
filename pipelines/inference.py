@@ -11,8 +11,8 @@ import os
 import sys
 
 # Add paths
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), '../mmdetection'))
+sys.path.insert(0, '/car_damage')
+sys.path.insert(0, '/car_damage/mmdetection')
 
 
 def main():

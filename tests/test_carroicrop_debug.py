@@ -3,8 +3,8 @@ Debug script to test CarROICrop transform
 """
 import sys
 import os
-sys.path.insert(0, '/workspace')
-sys.path.insert(0, 'mmdetection')
+sys.path.insert(0, '/car_damage')
+sys.path.insert(0, '/car_damage/mmdetection')
 
 import cv2
 import numpy as np

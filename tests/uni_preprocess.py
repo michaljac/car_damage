@@ -19,8 +19,8 @@ import numpy as np
 from tqdm import tqdm
 
 # Add paths for imports
-sys.path.insert(0, '/workspace')
-sys.path.insert(0, 'mmdetection')
+sys.path.insert(0, '/car_damage')
+sys.path.insert(0, '/car_damage/mmdetection')
 
 from mmdet.apis import init_detector, inference_detector
 
