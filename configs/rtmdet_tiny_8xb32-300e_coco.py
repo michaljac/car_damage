@@ -179,12 +179,12 @@ resume = False
 stage2_num_epochs = 20
 test_cfg = dict(type='TestLoop')
 test_dataloader = dict(
-    batch_size=5,
+    batch_size=16,
     dataset=dict(
-        ann_file='annotations/instances_val2017.json',
+        ann_file='annotations/annotations_val.json',
         backend_args=None,
         data_prefix=dict(img='val2017/'),
-        data_root='data/coco/',
+        data_root='/Data/coco/',
         pipeline=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True),
@@ -192,7 +192,7 @@ test_dataloader = dict(
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
             dict(
                 type='CarROICrop',
-                detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
+                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
                 detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
                 score_threshold=0.3,
                 padding_ratio=0.1,
@@ -235,7 +235,7 @@ test_dataloader = dict(
     persistent_workers=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 test_evaluator = dict(
-    ann_file='data/coco/annotations/instances_val2017.json',
+    ann_file='/Data/coco/annotations/annotations_val.json',
     backend_args=None,
     format_only=False,
     metric='bbox',
@@ -251,8 +251,8 @@ test_pipeline = [
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
     dict(
         type='CarROICrop',
-        detector_config='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
+        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.1,
         square_crop=True,
@@ -291,17 +291,17 @@ train_cfg = dict(
             1,
         ),
     ],
-    max_epochs=300,
+    max_epochs=50,
     type='EpochBasedTrainLoop',
     val_interval=10)
 train_dataloader = dict(
     batch_sampler=None,
     batch_size=32,
     dataset=dict(
-        ann_file='annotations/instances_train2017.json',
+        ann_file='annotations/annotations_train.json',
         backend_args=None,
         data_prefix=dict(img='train2017/'),
-        data_root='data/coco/',
+        data_root='/Data/coco/',
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=[
             dict(backend_args=None, type='LoadImageFromFile'),
@@ -310,7 +310,7 @@ train_dataloader = dict(
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
             dict(
                 type='CarROICrop',
-                detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
+                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
                 detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
                 score_threshold=0.3,
                 padding_ratio=0.1,
@@ -388,8 +388,8 @@ train_pipeline = [
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
     dict(
         type='CarROICrop',
-        detector_config='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
+        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.1,
         square_crop=True,
@@ -458,13 +458,13 @@ train_pipeline_stage2 = [
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
     dict(
         type='CarROICrop',
-        detector_config='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
+        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.1,
         square_crop=True,
         min_crop_size=100,
-        device='cpu',
+        device='cuda',
         fallback_to_original=True,
         vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
     ),
@@ -554,12 +554,12 @@ tta_pipeline = [
 ]
 val_cfg = dict(type='ValLoop')
 val_dataloader = dict(
-    batch_size=5,
+    batch_size=16,
     dataset=dict(
-        ann_file='annotations/instances_val2017.json',
+        ann_file='annotations/annotations_val.json',
         backend_args=None,
         data_prefix=dict(img='val2017/'),
-        data_root='data/coco/',
+        data_root='/Data/coco/',
         pipeline=[
             dict(backend_args=None, type='LoadImageFromFile'),
             dict(type='LoadAnnotations', with_bbox=True),
@@ -567,7 +567,7 @@ val_dataloader = dict(
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
             dict(
                 type='CarROICrop',
-                detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
+                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
                 detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
                 score_threshold=0.3,
                 padding_ratio=0.1,
@@ -610,7 +610,7 @@ val_dataloader = dict(
     persistent_workers=True,
     sampler=dict(shuffle=False, type='DefaultSampler'))
 val_evaluator = dict(
-    ann_file='data/coco/annotations/instances_val2017.json',
+    ann_file='/Data/coco/annotations/annotations_val.json',
     backend_args=None,
     format_only=False,
     metric='bbox',

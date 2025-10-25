@@ -8,7 +8,7 @@ import sys
 
 # Add paths to load custom transforms and mmdetection
 sys.path.insert(0, '/workspace')
-sys.path.insert(0, '/workspace/mmdetection')
+sys.path.insert(0, 'mmdetection')
 
 from mmengine.config import Config
 from mmengine.runner import Runner
@@ -19,10 +19,10 @@ from mmengine.runner import Runner
 # ============================================================================
 
 # Config file path
-CONFIG_FILE = '/workspace/configs/rtmdet_tiny_car_roi.py'
+CONFIG_FILE = 'configs/rtmdet_tiny_car_roi.py'
 
 # Working directory for checkpoints and logs
-WORK_DIR = '/workspace/work_dirs/rtmdet_car_damage'
+WORK_DIR = 'work_dirs/rtmdet_car_damage'
 
 # Training settings
 NUM_EPOCHS = 50  # Number of training epochs

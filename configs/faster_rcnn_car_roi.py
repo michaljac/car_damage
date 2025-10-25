@@ -16,7 +16,7 @@ custom_imports = dict(
 )
 
 # Data settings
-data_root = 'Data/coco/'
+data_root = '/Data/coco/'
 
 # Model - update num_classes to match your dataset
 model = dict(
@@ -31,13 +31,13 @@ model = dict(
 # Using RTMDet-x for vehicle detection, Faster R-CNN for damage detection
 car_roi_transform = dict(
     type='CarROICrop',
-    detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
+    detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
     detector_checkpoint=None,  # Auto-download
     score_threshold=0.3,
     padding_ratio=0.1,
     square_crop=True,
     min_crop_size=100,
-    device='cpu',
+    device='cuda',
     fallback_to_original=True,
     vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
 )
@@ -66,12 +66,12 @@ test_pipeline = [
 
 # Dataset configuration
 train_dataloader = dict(
-    batch_size=2,  # Faster R-CNN uses smaller batch size
+    batch_size=16,  # Faster R-CNN uses smaller batch size
     num_workers=4,
     dataset=dict(
         type='CocoDataset',
         data_root=data_root,
-        ann_file='annotations/instances_train2017.json',
+        ann_file='annotations/annotations_train.json',
         data_prefix=dict(img='train2017/'),
         filter_cfg=dict(filter_empty_gt=True, min_size=32),
         pipeline=train_pipeline
@@ -79,12 +79,12 @@ train_dataloader = dict(
 )
 
 val_dataloader = dict(
-    batch_size=1,
+    batch_size=16,
     num_workers=2,
     dataset=dict(
         type='CocoDataset',
         data_root=data_root,
-        ann_file='annotations/instances_val2017.json',
+        ann_file='annotations/annotations_val.json',
         data_prefix=dict(img='val2017/'),
         test_mode=True,
         pipeline=test_pipeline
@@ -96,7 +96,7 @@ test_dataloader = val_dataloader
 # Evaluation configuration
 val_evaluator = dict(
     type='CocoMetric',
-    ann_file=data_root + 'annotations/instances_val2017.json',
+    ann_file=data_root + 'annotations/annotations_val.json',
     metric='bbox',
     format_only=False
 )
@@ -104,7 +104,7 @@ val_evaluator = dict(
 test_evaluator = val_evaluator
 
 # Training configuration - Faster R-CNN typically trains for 12 epochs (1x schedule)
-max_epochs = 12
+max_epochs = 50
 train_cfg = dict(
     type='EpochBasedTrainLoop',
     max_epochs=max_epochs,

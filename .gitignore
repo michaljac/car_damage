@@ -4,4 +4,5 @@ viz_results/
 work_dirs/
 examples/
 tests/visual_test_crops/
-GOOGLE_COLAB_GUIDE.md
+*.docx
+*.tmp

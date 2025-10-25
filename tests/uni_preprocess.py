@@ -20,7 +20,7 @@ from tqdm import tqdm
 
 # Add paths for imports
 sys.path.insert(0, '/workspace')
-sys.path.insert(0, '/workspace/mmdetection')
+sys.path.insert(0, 'mmdetection')
 
 from mmdet.apis import init_detector, inference_detector
 
@@ -47,7 +47,7 @@ ANNOTATION_PATHS = [
 OUTPUT_DIR = 'tests/preprocess_test_output'
 
 # Vehicle detector (RTMDet-tiny for speed)
-VEHICLE_DETECTOR_CONFIG = '/workspace/mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py'
+VEHICLE_DETECTOR_CONFIG = 'mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py'
 VEHICLE_DETECTOR_CHECKPOINT = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth'
 
 # COCO vehicle class IDs

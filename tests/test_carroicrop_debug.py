@@ -4,7 +4,7 @@ Debug script to test CarROICrop transform
 import sys
 import os
 sys.path.insert(0, '/workspace')
-sys.path.insert(0, '/workspace/mmdetection')
+sys.path.insert(0, 'mmdetection')
 
 import cv2
 import numpy as np
@@ -27,7 +27,7 @@ except Exception as e:
 print("\n[TEST 2] Instantiating CarROICrop with CPU device...")
 try:
     transform = CarROICrop(
-        detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_config='mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py',
         detector_checkpoint='https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.05,

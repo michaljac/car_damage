@@ -198,7 +198,7 @@ test_dataloader = dict(
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
             dict(
                 type='CarROICrop',
-                detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
+                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
                 detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
                 score_threshold=0.3,
                 padding_ratio=0.05,  # 5% optimal for car damage detection
@@ -257,8 +257,8 @@ test_pipeline = [
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
     dict(
         type='CarROICrop',
-        detector_config='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
+        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.05,  # 5% optimal for car damage detection
         square_crop=True,
@@ -394,8 +394,8 @@ train_pipeline = [
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
     dict(
         type='CarROICrop',
-        detector_config='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
+        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.05,  # 5% optimal for car damage detection
         square_crop=True,
@@ -464,8 +464,8 @@ train_pipeline_stage2 = [
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
     dict(
         type='CarROICrop',
-        detector_config='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='/workspace/mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
+        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
+        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
         score_threshold=0.3,
         padding_ratio=0.05,  # 5% optimal for car damage detection
         square_crop=True,
@@ -573,7 +573,7 @@ val_dataloader = dict(
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
             dict(
                 type='CarROICrop',
-                detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
+                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
                 detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
                 score_threshold=0.3,
                 padding_ratio=0.05,  # 5% optimal for car damage detection

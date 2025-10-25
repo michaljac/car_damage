@@ -18,7 +18,7 @@ import sys
 
 # Add paths
 sys.path.insert(0, '/workspace')
-sys.path.insert(0, '/workspace/mmdetection')
+sys.path.insert(0, 'mmdetection')
 
 from mmengine.config import Config
 from mmengine.runner import Runner
@@ -172,7 +172,7 @@ def test_carroicrop_import():
         
         # Try to instantiate
         transform = CarROICrop(
-            detector_config='/workspace/mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py',
+            detector_config='mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py',
             detector_checkpoint='https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
             score_threshold=0.3,
             padding_ratio=0.05,
