@@ -3,10 +3,96 @@ import json
 import shutil
 import yaml
 import cv2
-from mmdet.apis import DetInferencer
-# Register all modules to avoid the mmdet scope warning
 import torch
+import numpy as np
+from tqdm import tqdm
+from mmdet.apis import DetInferencer
 from mmdet.utils import register_all_modules
+
+def browse_dataset(ann_file, image_dir):
+    """Browse dataset by saving visualizations to a directory"""
+    
+    # Register all modules
+    register_all_modules()
+    
+    # Load annotations directly
+    with open(ann_file, 'r') as f:
+        data = json.load(f)
+    
+    # Create output directory
+    output_dir = 'examples/vehicle_detections'
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"\nSaving visualizations to: {output_dir}")
+    print(f"Total images to process: {len(data['images'])}")
+    
+    # Process all images with progress bar
+    for img_info in tqdm(data['images'], desc="Saving visualizations"):
+        img_path = os.path.join(image_dir, img_info['file_name'])
+        
+        # Load image
+        img = cv2.imread(img_path)
+        if img is None:
+            print(f"\nCould not load image: {img_path}")
+            continue
+            
+        # Get annotations for this image
+        img_anns = [ann for ann in data['annotations'] if ann['image_id'] == img_info['id']]
+        
+        # Draw on image
+        vis_img = img.copy()
+        for ann in img_anns:
+            # Draw bbox
+            x, y, w, h = map(int, ann['bbox'])
+            cv2.rectangle(vis_img, (x, y), (x + w, y + h), (0, 255, 0), 2)
+            
+            # Draw category
+            cv2.putText(vis_img, f"ID: {ann['category_id']}", (x, y-10),
+                       cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            
+            # Draw segmentation if available
+            # if 'segmentation' in ann:
+            #     for seg in ann['segmentation']:
+            #         pts = np.array(seg).reshape((-1, 2)).astype(np.int32)
+            #         cv2.polylines(vis_img, [pts], True, (255, 0, 0), 1)
+        
+        # Add image info
+        cv2.putText(vis_img, img_info['file_name'], (10, 30),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
+        
+        # Save visualization
+        save_path = os.path.join(output_dir, f"vis_{img_info['file_name']}")
+        cv2.imwrite(save_path, vis_img)
+    
+    print(f"\nDone! Visualizations saved to: {output_dir}")
+    print("You can view the images using your preferred image viewer")
+
+def save_annotations(ann_file, data):
+    """Save annotations to JSON file using a temporary file for safety"""
+    
+    # Create backup first
+    backup_dir = os.path.join(os.path.dirname(ann_file), 'backup')
+    os.makedirs(backup_dir, exist_ok=True)
+    backup_path = os.path.join(backup_dir, f"{os.path.basename(ann_file)}")
+    shutil.copy2(ann_file, backup_path)
+    print(f"Created backup at: {backup_path}")
+    
+    # Save to temporary file first
+    filename, ext = os.path.splitext(ann_file)
+    temp_file = filename + '_tmp' + ext
+    try:
+        with open(temp_file, 'w') as f:
+            json.dump(data, f, indent=2)
+        # Atomic rename operation
+        os.replace(temp_file, ann_file)
+        print(f"Successfully saved annotations to: {ann_file}")
+        return True
+    except Exception as e:
+        # Clean up temp file if something goes wrong
+        if os.path.exists(temp_file):
+            os.remove(temp_file)
+        print(f"Error saving annotations: {str(e)}")
+        return False
+
 
 def visualize_detection(img_path, box, score, output_dir, filename):
     """Visualize vehicle detection and save the result"""
@@ -214,14 +300,14 @@ def process_ann_file(ann_file, data_dir, valid_categories):
 
     # clean the dataset
     processing_steps = [
-        (process_annotations_without_images, [images, annotations, data]),
-        (process_images_without_annotations, [images, image_id_to_annotations, data, data_dir]),
-        (process_annotations_with_invalid_category, [annotations, valid_categories, data]),
-        (process_annotations_with_invalid_bbox, [images, annotations, data]),
-        (process_duplicate_images, [images, data, data_dir]),
-        (process_duplicate_annotations, [annotations, data]),
-        (process_missing_image_files, [images, data_dir, data]),
-        (process_unlisted_image_files, [images, data_dir])
+        # (process_annotations_without_images, [images, annotations, data]),
+        # (process_images_without_annotations, [images, image_id_to_annotations, data, data_dir]),
+        # (process_annotations_with_invalid_category, [annotations, valid_categories, data]),
+        # (process_annotations_with_invalid_bbox, [images, annotations, data]),
+        # (process_duplicate_images, [images, data, data_dir]),
+        # (process_duplicate_annotations, [annotations, data]),
+        # (process_missing_image_files, [images, data_dir, data]),
+        # (process_unlisted_image_files, [images, data_dir])
     ]
 
     # Run all processing steps but only set changes_made to True for the first successful change
@@ -243,28 +329,11 @@ def process_ann_file(ann_file, data_dir, valid_categories):
             # Create backup
             backup_dir = os.path.join(os.path.dirname(ann_file), 'backup')
             os.makedirs(backup_dir, exist_ok=True)
-            backup_path = os.path.join(backup_dir, f"{os.path.basename(ann_file)}.bak")
+            backup_path = os.path.join(backup_dir, f"{os.path.basename(ann_file)}")
             shutil.copy2(ann_file, backup_path)
             
-            # # Save changes
-            # with open(ann_file, 'w') as f:
-            #     json.dump(data, f, indent=2)
-            # print(f"Saved updated annotations to: {ann_file}")
-
-            # Save changes to temp file first
-            filename, ext = os.path.splitext(ann_file)
-            temp_file = filename + '_tmp' + ext
-            try:
-                with open(temp_file, 'w') as f:
-                    json.dump(data, f, indent=2)
-                # Atomic rename operation
-                os.replace(temp_file, ann_file)
-                print(f"Saved updated annotations to: {ann_file}")
-            except Exception as e:
-                # Clean up temp file if something goes wrong
-                if os.path.exists(temp_file):
-                    os.remove(temp_file)
-                raise e  # Re-raise the exception after cleanup
+            # Save annotations
+            save_annotations(ann_file, data)
     
     else:
         print("Annotation file is ready for training.")
@@ -308,7 +377,8 @@ def add_car_category(cfg, ann_file, image_dir, car_category_id=7):
             image_id_to_annotations[image_id] = []
         image_id_to_annotations[image_id].append(ann)
 
-    for img in images:
+    max_ann_id = max((ann['id'] for ann in annotations), default=0)
+    for img in tqdm(images):
         img_path = os.path.join(image_dir, img['file_name'])
         if not os.path.exists(img_path):
             print(f"Image file not found: {img_path}")
@@ -347,32 +417,65 @@ def add_car_category(cfg, ann_file, image_dir, car_category_id=7):
             y = float(box[1])
             w = float(box[2] - box[0])
             h = float(box[3] - box[1])
-            
-            new_ann = {
-                'id': len(annotations) + 1,
-                'image_id': img['id'],
-                'category_id': car_category_id,  # Single category ID for all vehicles
-                'bbox': [x, y, w, h],
-                'area': w * h,
-                'iscrowd': 0,
-                'score': float(largest_vehicle['score'])
+
+            # print(f"Added vehicle annotation for image ID {img['id']} "
+            #     f"with bbox {[x, y, w, h]} (score: {largest_vehicle['score']:.2f})")
+
+        else: # No vehicle detected, use full image bbox
+            x = float(0)
+            y = float(0)
+            w = img['width']
+            h = img['height']
+
+            print(f"No vehicle detected for image ID {img['id']}, added the imgsz as the bbox. ")
+        # Create polygon segmentation from bbox
+        # Format: [x1,y1, x2,y1, x2,y2, x1,y2, x1,y1]
+        segmentation = [[
+            x, y,           # top-left
+            x + w, y,       # top-right
+            x + w, y + h,   # bottom-right
+            x, y + h,       # bottom-left
+            x, y            # back to start to close polygon
+        ]]
+
+        new_ann = {
+            'id': max_ann_id + 1,
+            'image_id': img['id'],
+            'category_id': car_category_id,  # Single category ID for all vehicles
+            'segmentation': segmentation,
+            'area': w * h,
+            'bbox': [x, y, w, h],
+            'iscrowd': 0,
+            'attributes': {
+                'occluded': False  # Default to not occluded
             }
-            annotations.append(new_ann)
-            print(f"Added vehicle annotation for image ID {img['id']} "
-                  f"with bbox {new_ann['bbox']} (score: {largest_vehicle['score']:.2f})")
+        }
+        annotations.append(new_ann)
+        max_ann_id += 1  # Increment for next annotation
+        # print(f"Added vehicle annotation for image ID {img['id']} "
+        #         f"with bbox {new_ann['bbox']} (score: {largest_vehicle['score']:.2f})")
+
+    # save annotations
+    if get_user_confirmation("Would you like to save the updated annotations?"):
+        data['annotations'] = annotations
+        
+        if save_annotations(ann_file, data):
+            print(f"Saved {len(annotations)} annotations")
+        else:
+            print("Failed to save annotations")
 
 
-        # visualize the detection results
-        visualize = get_user_confirmation("Would you like to visualize and save the detections?")
-        if visualize:
-            vis_dir = cfg['vis_dir']
-            visualize_detection(
-                img_path=img_path,
-                box=box,
-                score=score,
-                output_dir=vis_dir,
-                filename=img['file_name']
-            )
+    # # visualize the detection results
+    # visualize = get_user_confirmation("Would you like to visualize and save the detections?")
+    # if visualize:
+    #     vis_dir = cfg['vis_dir']
+    #     visualize_detection(
+    #         img_path=img_path,
+    #         box=box,
+    #         score=score,
+    #         output_dir=vis_dir,
+    #         filename=img['file_name']
+    #     )
 
     # Save updated annotations back to file
 
@@ -393,7 +496,7 @@ if __name__ == '__main__':
 
     # process each annotation file
     # print("\nChecking if data cleaning is needed...")
-    annotations_files = [annotations_train, annotations_val, annotations_test]
+    annotations_files = [annotations_val] #, annotations_val]
     # for ann_file in annotations_files:
     #     if not os.path.exists(ann_file):
     #         raise FileNotFoundError(f"Annotation file not found: {ann_file}")
@@ -406,7 +509,7 @@ if __name__ == '__main__':
     #         process_ann_file(ann_file, image_dir, valid_categories)
     
 
-    # inference each image and save the car ROIs to json file
+    # # inference each image and save the car ROIs to json file
     print("\nAll annotation files processed.")
     print("Now let's do inference cars from images.")
     for ann_file in annotations_files:
@@ -416,3 +519,12 @@ if __name__ == '__main__':
         # Construct image directory path
         image_dir = os.path.join(data_dir, f"{split}2017")
         add_car_category(cfg, ann_file, image_dir)
+
+
+    # if get_user_confirmation("\nWould you like to browse the dataset?"):
+    for ann_file in annotations_files:
+        print(f"\nBrowsing: {ann_file}")
+        ann_file_basename = os.path.basename(ann_file)
+        split = ann_file_basename.replace("annotations_", "").replace(".json", "")
+        image_dir = os.path.join(data_dir, f"{split}2017")
+        browse_dataset(ann_file, image_dir)
