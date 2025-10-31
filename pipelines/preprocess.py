@@ -16,7 +16,7 @@ def process_annotations_without_images(images, annotations, data):
     invalid_anns = [ann for ann in annotations if ann['image_id'] not in image_ids]
     
     if invalid_anns:
-        print(f"Found {len(invalid_anns)} annotations without corresponding images")
+        print(f"\nFound {len(invalid_anns)} annotations without corresponding images")
         if get_user_confirmation("Would you like to remove these annotations?"):
             data['annotations'] = [ann for ann in annotations if ann['image_id'] in image_ids]
             print(f"Removed {len(invalid_anns)} invalid annotations")
@@ -28,7 +28,7 @@ def process_images_without_annotations(images, image_id_to_annotations, data, da
     invalid_images = [img for img in images if not image_id_to_annotations.get(img['id'])]
     
     if invalid_images:
-        print(f"Found {len(invalid_images)} images without annotations")
+        print(f"\nFound {len(invalid_images)} images without annotations")
         if get_user_confirmation("Would you like to remove these images from JSON and disk?"):
             # Remove from JSON
             data['images'] = [img for img in images if image_id_to_annotations.get(img['id'])]
@@ -38,7 +38,7 @@ def process_images_without_annotations(images, image_id_to_annotations, data, da
                 if os.path.exists(img_path):
                     os.remove(img_path)
                     print(f"Removed file: {img_path}")
-            print(f"Removed {len(invalid_images)} images from JSON and disk")
+            print(f"\nRemoved {len(invalid_images)} images from JSON and disk")
             return True
     return False
 
@@ -47,10 +47,10 @@ def process_annotations_with_invalid_category(annotations, valid_categories, dat
     invalid_anns = [ann for ann in annotations if ann['category_id'] not in valid_categories]
     
     if invalid_anns:
-        print(f"Found {len(invalid_anns)} annotations with invalid categories")
+        print(f"\nFound {len(invalid_anns)} annotations with invalid categories")
         if get_user_confirmation("Would you like to remove these annotations?"):
             data['annotations'] = [ann for ann in annotations if ann['category_id'] in valid_categories]
-            print(f"Removed {len(invalid_anns)} invalid annotations")
+            print(f"\nRemoved {len(invalid_anns)} invalid annotations")
             return True
     return False
 
@@ -68,10 +68,10 @@ def process_annotations_with_invalid_bbox(images, annotations, data):
                 invalid_anns.append(ann)
     
     if invalid_anns:
-        print(f"Found {len(invalid_anns)} annotations with invalid bboxes")
+        print(f"\nFound {len(invalid_anns)} annotations with invalid bboxes")
         if get_user_confirmation("Would you like to remove these annotations?"):
             data['annotations'] = [ann for ann in annotations if ann not in invalid_anns]
-            print(f"Removed {len(invalid_anns)} invalid annotations")
+            print(f"\nRemoved {len(invalid_anns)} invalid annotations")
             return True
     return False
 
@@ -87,7 +87,7 @@ def process_duplicate_images(images, data, data_dir):
             seen[img['file_name']] = img
     
     if duplicates:
-        print(f"Found {len(duplicates)} duplicate images")
+        print(f"\nFound {len(duplicates)} duplicate images")
         if get_user_confirmation("Would you like to remove duplicate images from JSON and disk?"):
             data['images'] = list(seen.values())
             # Remove duplicate files from disk
@@ -96,7 +96,7 @@ def process_duplicate_images(images, data, data_dir):
                 if os.path.exists(img_path):
                     os.remove(img_path)
                     print(f"Removed duplicate file: {img_path}")
-            print(f"Removed {len(duplicates)} duplicate images")
+            print(f"\nRemoved {len(duplicates)} duplicate images")
             return True
     return False
 
@@ -115,10 +115,10 @@ def process_duplicate_annotations(annotations, data):
             unique_anns.append(ann)
     
     if duplicates:
-        print(f"Found {len(duplicates)} duplicate annotations")
+        print(f"\nFound {len(duplicates)} duplicate annotations")
         if get_user_confirmation("Would you like to remove duplicate annotations?"):
             data['annotations'] = unique_anns
-            print(f"Removed {len(duplicates)} duplicate annotations")
+            print(f"\nRemoved {len(duplicates)} duplicate annotations")
             return True
     return False
 
@@ -131,14 +131,14 @@ def process_missing_image_files(images, data_dir, data):
             missing_images.append(img)
     
     if missing_images:
-        print(f"Found {len(missing_images)} images missing from disk")
+        print(f"\nFound {len(missing_images)} images missing from disk")
         if get_user_confirmation("Would you like to remove these entries from JSON?"):
             data['images'] = [img for img in images if img not in missing_images]
             # Also remove corresponding annotations
             missing_ids = {img['id'] for img in missing_images}
             data['annotations'] = [ann for ann in data['annotations'] 
                                  if ann['image_id'] not in missing_ids]
-            print(f"Removed {len(missing_images)} image entries and their annotations")
+            print(f"\nRemoved {len(missing_images)} image entries and their annotations")
             return True
     return False
 
@@ -154,7 +154,7 @@ def process_unlisted_image_files(images, data_dir):
                     unlisted_files.append(os.path.join(root, file))
     
     if unlisted_files:
-        print(f"Found {len(unlisted_files)} images on disk that aren't in JSON")
+        print(f"\nFound {len(unlisted_files)} images on disk that aren't in JSON")
         if get_user_confirmation("Would you like to remove these files from disk?"):
             for file_path in unlisted_files:
                 os.remove(file_path)
@@ -177,33 +177,118 @@ def process_ann_file(ann_file, data_dir, valid_categories):
             image_id_to_annotations[image_id] = []
         image_id_to_annotations[image_id].append(ann)
 
+    # Get initial counts for verification
+    initial_img_count = len(images)
+    initial_ann_count = len(annotations)
+
+    # clean the dataset
     processing_steps = [
-        # (process_annotations_without_images, [images, annotations, data]),
-        # (process_images_without_annotations, [images, image_id_to_annotations, data, data_dir]),
+        (process_annotations_without_images, [images, annotations, data]),
+        (process_images_without_annotations, [images, image_id_to_annotations, data, data_dir]),
         (process_annotations_with_invalid_category, [annotations, valid_categories, data]),
-        # (process_annotations_with_invalid_bbox, [images, annotations, data]),
-        # (process_duplicate_images, [images, data, data_dir]),
-        # (process_duplicate_annotations, [annotations, data]),
-        # (process_missing_image_files, [images, data_dir, data]),
-        # (process_unlisted_image_files, [images, data_dir])
+        (process_annotations_with_invalid_bbox, [images, annotations, data]),
+        (process_duplicate_images, [images, data, data_dir]),
+        (process_duplicate_annotations, [annotations, data]),
+        (process_missing_image_files, [images, data_dir, data]),
+        (process_unlisted_image_files, [images, data_dir])
     ]
 
     # Run all processing steps but only set changes_made to True for the first successful change
     changes_made = False
     for func, args in processing_steps:
-        result = func(*args)
-        if not changes_made:
-            changes_made = result
+        if func(*args):
+            changes_made = True
+            # Update our working copies after each change
+            images = data['images']
+            annotations = data['annotations']
             
-    # Save changes if any were made
+    # Print change summary
     if changes_made:
+        print("\nChanges summary:")
+        print(f"Images: {initial_img_count} -> {len(images)}")
+        print(f"Annotations: {initial_ann_count} -> {len(annotations)}")
+        
         if get_user_confirmation("Would you like to save the changes to the JSON file?"):
-            backup_path = f"{ann_file}.backup"
+            # Create backup
+            backup_dir = os.path.join(os.path.dirname(ann_file), 'backup')
+            os.makedirs(backup_dir, exist_ok=True)
+            backup_path = os.path.join(backup_dir, f"{os.path.basename(ann_file)}.bak")
             shutil.copy2(ann_file, backup_path)
-            print(f"Created backup at: {backup_path}")
-            with open(ann_file, 'w') as f:
-                json.dump(data, f, indent=2)
-            print(f"Saved updated annotations to: {ann_file}")
+            
+            # # Save changes
+            # with open(ann_file, 'w') as f:
+            #     json.dump(data, f, indent=2)
+            # print(f"Saved updated annotations to: {ann_file}")
+
+            # Save changes to temp file first
+            filename, ext = os.path.splitext(ann_file)
+            temp_file = filename + '_tmp' + ext
+            try:
+                with open(temp_file, 'w') as f:
+                    json.dump(data, f, indent=2)
+                # Atomic rename operation
+                os.replace(temp_file, ann_file)
+                print(f"Saved updated annotations to: {ann_file}")
+            except Exception as e:
+                # Clean up temp file if something goes wrong
+                if os.path.exists(temp_file):
+                    os.remove(temp_file)
+                raise e  # Re-raise the exception after cleanup
+    
+    else:
+        print("Annotation file is ready for training.")
+
+
+
+def add_car_category(ann_file, image_dir):
+    from mmdet.apis import init_detector, inference_detector
+    from mmdet.apis import DetInferencer
+    import mmcv
+
+    inferencer = DetInferencer('mmdetection/mmdet/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py')
+    car_category_id = 7  # Assuming 'car' category ID is 7
+
+    with open(ann_file, 'r') as f:
+        data = json.load(f)
+
+    images = data.get('images', [])
+    annotations = data.get('annotations', [])
+    image_id_to_annotations = {}
+    for ann in annotations:
+        image_id = ann['image_id']
+        if image_id not in image_id_to_annotations:
+            image_id_to_annotations[image_id] = []
+        image_id_to_annotations[image_id].append(ann)
+
+    for img in images:
+        img_path = os.path.join(image_dir, img['file_name'])
+        if not os.path.exists(img_path):
+            print(f"Image file not found: {img_path}")
+            continue
+        
+        results = inferencer(img_path, show=True) # show on the window
+        result = results[0]  # Assuming single image input
+        car_bboxes = result[car_category_id - 1]  # Adjust index for zero-based
+
+        if len(car_bboxes) > 0:
+            largest_car_bbox = max(car_bboxes, key=lambda x: x[2] * x[3])  # x, y, w, h
+            x, y, w, h, score = largest_car_bbox
+            if score >= 0.5:  # Confidence threshold
+                new_ann = {
+                    'id': len(annotations) + 1,
+                    'image_id': img['id'],
+                    'category_id': car_category_id,
+                    'bbox': [x, y, w, h],
+                    'area': w * h,
+                    'iscrowd': 0
+                }
+                annotations.append(new_ann)
+                print(f"Added car annotation for image ID {img['id']} with bbox {new_ann['bbox']}")
+
+    data['annotations'] = annotations
+
+    # if get_user_confirmation("Would you like to save the updated annotations with car ROIs?"):
+    #     backup_path = f
     
 if __name__ == '__main__':
     
@@ -214,6 +299,8 @@ if __name__ == '__main__':
     annotations_val = os.path.join(annotations_dir, "annotations_val.json")
     annotations_test = os.path.join(annotations_dir, "annotations_test.json")
 
+    # process each annotation file
+    print("\nChecking if data cleaning is needed...")
     annotations_files = [annotations_train, annotations_val, annotations_test]
     for ann_file in annotations_files:
         if not os.path.exists(ann_file):
@@ -225,3 +312,15 @@ if __name__ == '__main__':
             # Construct image directory path
             image_dir = os.path.join(data_dir, f"{split}2017")
             process_ann_file(ann_file, image_dir, valid_categories)
+    
+
+    # # inference each image and save the car ROIs to json file
+    # print("\nAll annotation files processed.")
+    # print("Now let's do inference cars from images.")
+    # for ann_file in annotations_files:
+    #     print(f"\nProcessing annotation file: {ann_file}")
+    #     ann_file_basename = os.path.basename(ann_file)
+    #     split = ann_file_basename.replace("annotations_", "").replace(".json", "")
+    #     # Construct image directory path
+    #     image_dir = os.path.join(data_dir, f"{split}2017")
+    #     add_car_category(ann_file, image_dir)

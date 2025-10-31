@@ -1,63 +1,69 @@
-## 🚗 Project Report: Vehicle Damage Detection with Dynamic ROI Cropping
+# Vehicle Damage Detection with Dynamic ROI Cropping
 
-### **1. Model Selection**
-Several pretrained backbones were evaluated — **RTMDet-tiny**, **RTMDet-s**, and **Faster R-CNN** — all initialized from COCO weights.  
-After comparative experiments, **RTMDet-s** achieved the highest performance, especially for **small-scale damages such as scratches**.  
-Its stronger multi-scale feature extraction led to higher precision and recall across most categories.
+## <img src="" width="20" height="20" style="vertical-align: middle; margin-right: 8px;"> Quick Start Summary
+<div>
 
----
+**🚀 Get Started in 4 Steps:**
 
-### **2. Preprocessing and ROI Handling**
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/michaljac/car_damage.git
+   cd car_damage
+   ```
 
-#### **Data Preprocessing**
-To ensure data integrity and compatibility with MMDetection:
-- Skipped **incorrect references**, **mislabeled IDs**, and **duplicate annotations**.  
-- Clipped bounding boxes that exceeded image dimensions.  
-- Reorganized the dataset into **COCO format** under the `coco/` directory.
+2. **Build the image**
+- **Windows:**
+```bash
+docker build -t car_damage:v1 -f Dockerfile .
+```
 
-#### **Dynamic Car ROI Cropping (“On the Fly”)**
-A key part of the pipeline was a custom preprocessing transform that dynamically crops vehicle regions during both **training** and **inference**.
+2. **Build the container**
+- **Windows:**
 
-- Used a pretrained detector to infer on raw data and **detect vehicle-like objects**, filtering relevant COCO classes:  
-  *car, bus, truck, motorcycle,* and *bicycle*.
-- For each detection:
-  - Cropped the detected car region with slight **padding** to preserve context.  
-  - Adjusted all bounding boxes relative to the new cropped image dimensions.
-- During training/inference, each image passed through this transform in real time.
-- After inference, bounding boxes were **mapped back** to the original full-image coordinates.
+```bash
+docker run --rm -v "$(pwd):/workspace" -v "$(pwd)/../Data/car_damage:/Data" car_damage:v1
+```
 
-The transform implementation is located in:  
-`mmdetection/mmdet/datasets/transforms/car_roi_crop.py`
+download dataset zip from google drive.
+put it in container so you'll have 
+.../car_damage:/workspace
+.../Data/damage:/Data
 
----
+after extract the dataset zip, and rename the folder "Dataset" to "coco", so the structure is:
+/Data/coco
+where the images are in: /Data/coco/train2017 (val2017, test2017)
+and the annotations are in: //Data/coco/annotations
 
-### **3. Evaluation Results**
-Evaluation metrics (Precision, Recall, mAP, etc.) were plotted per category.  
-Due to **class imbalance** and **annotation inconsistencies**, results varied across categories.  
-While the preprocessing pipeline validated the structure of each annotation, it did not automatically correct semantically mislabeled but valid categories.  
-Despite this, **RTMDet-s consistently outperformed other models**, particularly in fine-grained damage detection.
 
----
+## <img src="" width="20" height="20" style="vertical-align: middle; margin-right: 8px;"> Project Structure
 
-### **4. Challenges and Limitations**
-Training was performed on **cuda** due to the absence of a local GPU.  
-Although experiments on **Google Colab** and **Kaggle** were attempted, integration between **PyTorch** and **MMDetection** caused dependency conflicts that prevented stable GPU acceleration.  
-Consequently, all training and inference were executed on cuda-based models, leading to **slower training** and **reduced model performance** compared to GPU setups.
+```
+car_damage/                    # Project root
+├── Dockerfile               # Main application image
+├── configs/                     # Configs
+│   ├── faster_rcnn_car_roi.py                 
+│   │   └── rtmdet_s_car_roi.py   
+├── mmdetection/                     
+│     |__mmdet/                
+│         └── datasets/
+|                |__transforms/
+|                       |___car_roi_crop.py    # the class "on the fly"
+|
+├── pipelines/                 # main scripts
+│   ├── preprocess.py    
+│   └── train.py
+|   |__ inference.py
+|   |__evaluate.py  
+├── tests/                  # Test suite
+│   ├── uni_preprocess.py    
+│   └── uni_train.py
+|   |__ uni_inference.py
+|   |__uni_evaluate.py                 
+├── utils/                  # helpers
+├── workdirs/                 # all the runs (unuploaded to git)
+├── requirements.txt         # Python dependencies
+└── README.md               # This file
+```
 
----
 
-### **Summary**
-| Component | Description |
-|------------|-------------|
-| **Best Model** | RTMDet-s |
-| **ROI Strategy** | Dynamic car ROI cropping during training/inference |
-| **Transform File** | `mmdetection/mmdet/datasets/transforms/car_roi_crop.py` |
-| **Evaluation Metrics** | Precision, Recall, mAP (per category) |
-| **Limitation** | cuda-only execution due to missing GPU support |
 
----
-
-**Next Steps**
-- Migrate the setup to a **GPU cloud environment** (RunPod, Lambda, or Paperspace) for full-speed MMDetection training.
-- Extend preprocessing to automatically reclassify mislabeled categories.
-- Experiment with **data augmentation** on cropped ROIs for enhanced small-object robustness.
