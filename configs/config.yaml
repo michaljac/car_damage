@@ -1,0 +1,14 @@
+# params
+vehicle_classes: {'bicycle': 1, 'car': 2, 'motorcycle': 3, 'bus': 5, 'truck': 7}
+score_threshold: 0.3
+valid_categories: [1, 2, 3, 4, 5, 6] # damages categories
+
+# paths
+data_dir: /Data/coco
+annotations_dir: /Data/coco/annotations
+annotations_train: /Data/coco/annotations/annotations_train.json
+annotations_val: /Data/coco/annotations/annotations_val.json
+annotations_test: /Data/coco/annotations/annotations_test.json
+config_file: mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py
+checkpoint_file: mmdetection/checkpoints/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth
+vis_dir: examples/vehicle_detections

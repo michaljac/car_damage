@@ -1,6 +1,37 @@
 import os
 import json
 import shutil
+import yaml
+import cv2
+from mmdet.apis import DetInferencer
+# Register all modules to avoid the mmdet scope warning
+import torch
+from mmdet.utils import register_all_modules
+
+def visualize_detection(img_path, box, score, output_dir, filename):
+    """Visualize vehicle detection and save the result"""
+    
+    # Read and copy image
+    img_array = cv2.imread(img_path)
+    if img_array is None:
+        print(f"Failed to load image: {img_path}")
+        return False
+        
+    img_vis = img_array.copy()
+    
+    # Draw bounding box
+    x1, y1, x2, y2 = map(int, box)
+    cv2.rectangle(img_vis, (x1, y1), (x2, y2), (255, 0, 0), 2)
+    
+    # Add score text
+    cv2.putText(img_vis, f"Score: {score:.2f}", (x1, y1-10),
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 0, 0), 2)
+    
+    # Save visualization
+    os.makedirs(output_dir, exist_ok=True)
+    output_path = os.path.join(output_dir, f"vis_{filename}")
+    cv2.imwrite(output_path, img_vis)
+
 
 def get_user_confirmation(message):
     """Helper function to get user confirmation"""
@@ -240,13 +271,30 @@ def process_ann_file(ann_file, data_dir, valid_categories):
 
 
 
-def add_car_category(ann_file, image_dir):
-    from mmdet.apis import init_detector, inference_detector
-    from mmdet.apis import DetInferencer
-    import mmcv
+def add_car_category(cfg, ann_file, image_dir, car_category_id=7):
+    
+    # register mmdet modules
+    register_all_modules()
 
-    inferencer = DetInferencer('mmdetection/mmdet/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py')
-    car_category_id = 7  # Assuming 'car' category ID is 7
+    # Model config and checkpoint paths
+    vehicle_classes = cfg['vehicle_classes']
+    config_file = cfg['config_file'] 
+    checkpoint_file = cfg['checkpoint_file']
+
+    # Download checkpoint if not exists
+    if not os.path.exists(checkpoint_file):
+        checkpoint_dir = os.path.dirname(checkpoint_file)
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        url = 'https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth'
+        print(f"Downloading checkpoint from {url}")
+        torch.hub.download_url_to_file(url, checkpoint_file)
+
+    # Initialize inferencer
+    inferencer = DetInferencer(
+        config_file,
+        checkpoint_file,
+        device='cpu'
+    )
 
     with open(ann_file, 'r') as f:
         data = json.load(f)
@@ -266,61 +314,105 @@ def add_car_category(ann_file, image_dir):
             print(f"Image file not found: {img_path}")
             continue
         
-        results = inferencer(img_path, show=True) # show on the window
-        result = results[0]  # Assuming single image input
-        car_bboxes = result[car_category_id - 1]  # Adjust index for zero-based
+        results = inferencer(img_path)
+        result = results['predictions'][0] 
+        
+        # Filter for vehicle classes only
+        vehicle_indices = [
+            i for i, label in enumerate(result['labels']) 
+            if label in vehicle_classes.values()
+        ] 
 
-        if len(car_bboxes) > 0:
-            largest_car_bbox = max(car_bboxes, key=lambda x: x[2] * x[3])  # x, y, w, h
-            x, y, w, h, score = largest_car_bbox
-            if score >= 0.5:  # Confidence threshold
-                new_ann = {
-                    'id': len(annotations) + 1,
-                    'image_id': img['id'],
-                    'category_id': car_category_id,
-                    'bbox': [x, y, w, h],
-                    'area': w * h,
-                    'iscrowd': 0
-                }
-                annotations.append(new_ann)
-                print(f"Added car annotation for image ID {img['id']} with bbox {new_ann['bbox']}")
+        # Get all vehicle detections with score >= score_threshold
+        valid_detections = []
+        for idx in vehicle_indices:
+            score = result['scores'][idx]
+            if score >= cfg['score_threshold']:
+                box = result['bboxes'][idx]
+                area = (box[2] - box[0]) * (box[3] - box[1])
+                valid_detections.append({
+                    'box': box,
+                    'score': score,
+                    'area': area,
+                    'type': 'vehicle'  # Single class for all vehicles
+                })
 
-    data['annotations'] = annotations
+        # Keep only the largest vehicle detection
+        if valid_detections:
+            largest_vehicle = max(valid_detections, key=lambda x: x['area'])
+            box = largest_vehicle['box']
+            
+            # Convert from [x1,y1,x2,y2] to [x,y,w,h] format
+            x = float(box[0])
+            y = float(box[1])
+            w = float(box[2] - box[0])
+            h = float(box[3] - box[1])
+            
+            new_ann = {
+                'id': len(annotations) + 1,
+                'image_id': img['id'],
+                'category_id': car_category_id,  # Single category ID for all vehicles
+                'bbox': [x, y, w, h],
+                'area': w * h,
+                'iscrowd': 0,
+                'score': float(largest_vehicle['score'])
+            }
+            annotations.append(new_ann)
+            print(f"Added vehicle annotation for image ID {img['id']} "
+                  f"with bbox {new_ann['bbox']} (score: {largest_vehicle['score']:.2f})")
 
-    # if get_user_confirmation("Would you like to save the updated annotations with car ROIs?"):
-    #     backup_path = f
+
+        # visualize the detection results
+        visualize = get_user_confirmation("Would you like to visualize and save the detections?")
+        if visualize:
+            vis_dir = cfg['vis_dir']
+            visualize_detection(
+                img_path=img_path,
+                box=box,
+                score=score,
+                output_dir=vis_dir,
+                filename=img['file_name']
+            )
+
+    # Save updated annotations back to file
+
     
 if __name__ == '__main__':
     
-    valid_categories = range(1, 7)
-    data_dir = "/Data/coco"
-    annotations_dir = "/Data/coco/annotations"
-    annotations_train = os.path.join(annotations_dir, "annotations_train.json")
-    annotations_val = os.path.join(annotations_dir, "annotations_val.json")
-    annotations_test = os.path.join(annotations_dir, "annotations_test.json")
+
+    with open('configs/config.yaml') as f:
+        cfg = yaml.load(f, Loader=yaml.FullLoader)
+
+
+    valid_categories = cfg['valid_categories']
+    data_dir = cfg['data_dir'] 
+    annotations_dir = cfg['annotations_dir']
+    annotations_train = cfg['annotations_train']
+    annotations_val = cfg['annotations_val']
+    annotations_test = cfg['annotations_test']
 
     # process each annotation file
-    print("\nChecking if data cleaning is needed...")
+    # print("\nChecking if data cleaning is needed...")
     annotations_files = [annotations_train, annotations_val, annotations_test]
-    for ann_file in annotations_files:
-        if not os.path.exists(ann_file):
-            raise FileNotFoundError(f"Annotation file not found: {ann_file}")
-        else:
-            print(f"\nProcessing annotation file: {ann_file}")
-            ann_file_basename = os.path.basename(ann_file)
-            split = ann_file_basename.replace("annotations_", "").replace(".json", "")
-            # Construct image directory path
-            image_dir = os.path.join(data_dir, f"{split}2017")
-            process_ann_file(ann_file, image_dir, valid_categories)
+    # for ann_file in annotations_files:
+    #     if not os.path.exists(ann_file):
+    #         raise FileNotFoundError(f"Annotation file not found: {ann_file}")
+    #     else:
+    #         print(f"\nProcessing annotation file: {ann_file}")
+    #         ann_file_basename = os.path.basename(ann_file)
+    #         split = ann_file_basename.replace("annotations_", "").replace(".json", "")
+    #         # Construct image directory path
+    #         image_dir = os.path.join(data_dir, f"{split}2017")
+    #         process_ann_file(ann_file, image_dir, valid_categories)
     
 
-    # # inference each image and save the car ROIs to json file
-    # print("\nAll annotation files processed.")
-    # print("Now let's do inference cars from images.")
-    # for ann_file in annotations_files:
-    #     print(f"\nProcessing annotation file: {ann_file}")
-    #     ann_file_basename = os.path.basename(ann_file)
-    #     split = ann_file_basename.replace("annotations_", "").replace(".json", "")
-    #     # Construct image directory path
-    #     image_dir = os.path.join(data_dir, f"{split}2017")
-    #     add_car_category(ann_file, image_dir)
+    # inference each image and save the car ROIs to json file
+    print("\nAll annotation files processed.")
+    print("Now let's do inference cars from images.")
+    for ann_file in annotations_files:
+        print(f"\nProcessing annotation file: {ann_file}")
+        ann_file_basename = os.path.basename(ann_file)
+        split = ann_file_basename.replace("annotations_", "").replace(".json", "")
+        # Construct image directory path
+        image_dir = os.path.join(data_dir, f"{split}2017")
+        add_car_category(cfg, ann_file, image_dir)

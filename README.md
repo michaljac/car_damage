@@ -39,10 +39,11 @@ and the annotations are in: //Data/coco/annotations
 
 ```
 car_damage/                    # Project root
-├── Dockerfile               # Main application image
-├── configs/                     # Configs
-│   ├── faster_rcnn_car_roi.py                 
-│   │   └── rtmdet_s_car_roi.py   
+├── Dockerfile               
+├── configs/   
+|___|__config.yaml                  # Configs
+│   ├──faster_rcnn_car_roi.py                 
+│   │__rtmdet_s_car_roi.py   
 ├── mmdetection/                     
 │     |__mmdet/                
 │         └── datasets/
