@@ -5,10 +5,11 @@
 _base_ = '../mmdetection/configs/rtmdet/rtmdet_s_8xb32-300e_coco.py'
 
 # Custom imports to load CarROICrop transform
-custom_imports = dict(
-    imports=['mmdet.datasets.transforms.car_roi_crop'],
-    allow_failed_imports=False
-)
+# Note: CarROICrop is already registered when mmdet.datasets is imported
+# custom_imports = dict(
+#     imports=['mmdet.datasets.transforms.car_roi_crop'],
+#     allow_failed_imports=False
+# )
 
 # Data settings
 data_root = '/Data/coco/'
@@ -23,24 +24,13 @@ model = dict(
 
 # CarROICrop Transform Configuration
 # Using RTMDet-x for vehicle detection, RTMDet-S for damage detection
-car_roi_transform = dict(
-    type='CarROICrop',
-    detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
-    detector_checkpoint=None,  # Auto-download
-    score_threshold=0.3,
-    padding_ratio=0.1,
-    square_crop=True,
-    min_crop_size=100,
-    device='cuda',
-    fallback_to_original=True,
-    vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
-)
+# car_roi_transform = dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
 
 # Training pipeline with CarROICrop
 train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
-    car_roi_transform,  # Apply CarROICrop
+    dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),  # CarROICrop AFTER LoadAnnotations
     dict(
         type='CachedMosaic',
         img_scale=(640, 640),
@@ -78,7 +68,7 @@ train_pipeline = [
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
-    car_roi_transform,  # Apply CarROICrop
+    dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
     dict(type='Resize', scale=(640, 640), keep_ratio=True),
     dict(
         type='Pad',
@@ -93,21 +83,23 @@ test_pipeline = [
 
 # Dataset configuration
 train_dataloader = dict(
-    batch_size=16,
-    num_workers=10,
+    batch_size=2,
+    num_workers=8,
+    persistent_workers=False,  # Disable persistent workers for WSL2 stability
     dataset=dict(
         type=dataset_type,
         data_root=data_root,
         ann_file='annotations/annotations_train.json',
         data_prefix=dict(img='train2017/'),
-        filter_cfg=dict(filter_empty_gt=True, min_size=32),
+        filter_cfg=dict(filter_empty_gt=False, min_size=32),
         pipeline=train_pipeline
     )
 )
 
 val_dataloader = dict(
-    batch_size=16,
-    num_workers=10,
+    batch_size=2,
+    num_workers=8,
+    persistent_workers=False,  # Disable persistent workers for WSL2 stability
     dataset=dict(
         type=dataset_type,
         data_root=data_root,

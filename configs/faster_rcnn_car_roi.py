@@ -46,7 +46,7 @@ car_roi_transform = dict(
 train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
-    car_roi_transform,  # Apply CarROICrop
+    dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
     dict(type='Resize', scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PackDetInputs')

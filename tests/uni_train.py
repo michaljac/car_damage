@@ -16,28 +16,33 @@ Usage:
 import os
 import sys
 
-# Add paths
-sys.path.insert(0, '/car_damage')
-sys.path.insert(0, '/car_damage/mmdetection')
+# Add paths - LOCAL mmdetection FIRST to use our custom CarROICrop
+sys.path.insert(0, '/workspace/mmdetection')
+sys.path.insert(0, '/workspace')
 
 from mmengine.config import Config
 from mmengine.runner import Runner
 
+from mmdet.utils import register_all_modules
+register_all_modules(init_default_scope=True)
 
+# Import datasets.transforms to ensure CarROICrop is registered
+from mmdet.datasets import transforms
 # ============================================================================
 # CONFIGURATION - Edit these values
 # ============================================================================
 
 # Config file
-CONFIG_FILE = 'configs/rtmdet_tiny_car_roi.py'
+CONFIG_FILE = 'configs/rtmdet_s_car_roi.py'  # RTMDet-S with CarROICrop
 
 # Working directory for outputs
 WORK_DIR = 'work_dirs/test_train_car_roi'
 
 # Training settings
 NUM_EPOCHS = 5  # Just a few epochs for testing
-DEVICE = 'cuda'  # Use GPU for training (CarROICrop needs GPU)
-BATCH_SIZE = 8  # Batch size for GPU
+DEVICE = 'cpu'  # CPU training
+BATCH_SIZE = 2  # Smaller batch size for CPU
+NUM_WORKERS = 2  # Number of workers for CPU
 
 # Resume from checkpoint (if exists)
 RESUME = False
@@ -138,13 +143,8 @@ def validate_carroicrop_config(cfg):
     for transform in train_pipeline:
         if transform.get('type') == 'CarROICrop':
             print("\nCarROICrop Configuration:")
-            print(f"  - detector_config: {transform.get('detector_config', 'default')}")
-            print(f"  - score_threshold: {transform.get('score_threshold', 0.3)}")
-            print(f"  - padding_ratio: {transform.get('padding_ratio', 0.1)}")
-            print(f"  - square_crop: {transform.get('square_crop', True)}")
-            print(f"  - selection_method: {transform.get('selection_method', 'largest_area')}")
-            print(f"  - device: {transform.get('device', 'cuda:0')}")
-            print(f"  - vehicle_classes: {transform.get('vehicle_classes', [2,3,4,6,8])}")
+            print(f"  - vehicle_class_id: {transform.get('vehicle_class_id', 7)}")
+            print(f"  - save_debug: {transform.get('save_debug', False)}")
             break
     
     # Check val pipeline
@@ -170,22 +170,19 @@ def test_carroicrop_import():
         from mmdet.datasets.transforms import CarROICrop
         print("✓ CarROICrop imported successfully from mmdet.datasets.transforms")
         
-        # Try to instantiate
+        # Try to instantiate with simple parameters
         transform = CarROICrop(
-            detector_config='mmdetection/configs/rtmdet/rtmdet_tiny_8xb32-300e_coco.py',
-            detector_checkpoint='https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_tiny_8xb32-300e_coco/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
-            score_threshold=0.3,
-            padding_ratio=0.05,
-            device='cuda'
+            vehicle_class_id=7,
+            save_debug=False
         )
         print("✓ CarROICrop instantiated successfully")
         print(f"  {transform}")
         
-        print(" CarROICrop import test passed!")
+        print("✅ CarROICrop import test passed!")
         return True
         
     except Exception as e:
-        print(f" ERROR: Failed to import CarROICrop: {e}")
+        print(f"❌ ERROR: Failed to import CarROICrop: {e}")
         return False
 
 
@@ -241,15 +238,11 @@ def run_training_test():
     cfg.work_dir = WORK_DIR
     cfg.train_dataloader.batch_size = BATCH_SIZE
     cfg.val_dataloader.batch_size = BATCH_SIZE
-    cfg.train_dataloader.num_workers = 0  # cuda mode
-    cfg.val_dataloader.num_workers = 0
+    cfg.train_dataloader.num_workers = NUM_WORKERS  # CPU workers
+    cfg.val_dataloader.num_workers = NUM_WORKERS
     
-    # Update CarROICrop device to match
-    for pipeline in [cfg.train_dataloader.dataset.pipeline, 
-                     cfg.val_dataloader.dataset.pipeline]:
-        for transform in pipeline:
-            if transform.get('type') == 'CarROICrop':
-                transform['device'] = DEVICE
+    # CarROICrop doesn't need device parameter - it works with annotations only
+    # (no internal detector in the simple version)
     
     # Configure WandB if enabled
     if USE_WANDB:

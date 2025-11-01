@@ -362,7 +362,7 @@ def add_car_category(cfg, ann_file, image_dir, car_category_id=7):
     inferencer = DetInferencer(
         config_file,
         checkpoint_file,
-        device='cpu'
+        device=cfg['device'],
     )
 
     with open(ann_file, 'r') as f:
@@ -496,22 +496,22 @@ if __name__ == '__main__':
 
     # process each annotation file
     # print("\nChecking if data cleaning is needed...")
-    annotations_files = [annotations_val] #, annotations_val]
-    # for ann_file in annotations_files:
-    #     if not os.path.exists(ann_file):
-    #         raise FileNotFoundError(f"Annotation file not found: {ann_file}")
-    #     else:
-    #         print(f"\nProcessing annotation file: {ann_file}")
-    #         ann_file_basename = os.path.basename(ann_file)
-    #         split = ann_file_basename.replace("annotations_", "").replace(".json", "")
-    #         # Construct image directory path
-    #         image_dir = os.path.join(data_dir, f"{split}2017")
-    #         process_ann_file(ann_file, image_dir, valid_categories)
+    annotations_files = [annotations_train, annotations_val, annotations_test] #, annotations_val]
+    for ann_file in annotations_files:
+        if not os.path.exists(ann_file):
+            raise FileNotFoundError(f"Annotation file not found: {ann_file}")
+        else:
+            print(f"\nProcessing annotation file: {ann_file}")
+            ann_file_basename = os.path.basename(ann_file)
+            split = ann_file_basename.replace("annotations_", "").replace(".json", "")
+            # Construct image directory path
+            image_dir = os.path.join(data_dir, f"{split}2017")
+            process_ann_file(ann_file, image_dir, valid_categories)
     
 
     # # inference each image and save the car ROIs to json file
     print("\nAll annotation files processed.")
-    print("Now let's do inference cars from images.")
+    print("\nNow let's do inference cars on images.")
     for ann_file in annotations_files:
         print(f"\nProcessing annotation file: {ann_file}")
         ann_file_basename = os.path.basename(ann_file)

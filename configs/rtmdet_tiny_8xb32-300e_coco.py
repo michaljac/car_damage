@@ -308,18 +308,7 @@ train_dataloader = dict(
             dict(type='LoadAnnotations', with_bbox=True),
             # CarROICrop: Detect and crop to largest vehicle region on-the-fly
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
-            dict(
-                type='CarROICrop',
-                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
-                detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
-                score_threshold=0.3,
-                padding_ratio=0.1,
-                square_crop=True,
-                min_crop_size=100,
-                device='cuda',
-                fallback_to_original=True,
-                vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
-            ),
+            dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
             dict(
                 img_scale=(
                     640,
@@ -386,18 +375,7 @@ train_pipeline = [
     dict(backend_args=None, type='LoadImageFromFile'),
     dict(type='LoadAnnotations', with_bbox=True),
     # CarROICrop: Detect and crop to largest vehicle region on-the-fly
-    dict(
-        type='CarROICrop',
-        detector_config='mmdetection/rtmdet_tiny_8xb32-300e_coco.py',
-        detector_checkpoint='mmdetection/rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth',
-        score_threshold=0.3,
-        padding_ratio=0.1,
-        square_crop=True,
-        min_crop_size=100,
-        device='cuda',
-        fallback_to_original=True,
-        vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
-    ),
+    dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
     dict(
         img_scale=(
             640,
@@ -565,18 +543,7 @@ val_dataloader = dict(
             dict(type='LoadAnnotations', with_bbox=True),
             # CarROICrop: Detect and crop to largest vehicle region on-the-fly
             # Using RTMDet-x for better vehicle detection accuracy (actual training uses RTMDet-tiny)
-            dict(
-                type='CarROICrop',
-                detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
-                detector_checkpoint=None,  # Will auto-download RTMDet-x checkpoint from MMDet model zoo
-                score_threshold=0.3,
-                padding_ratio=0.1,
-                square_crop=True,
-                min_crop_size=100,
-                device='cuda',
-                fallback_to_original=True,
-                vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
-            ),
+            dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
             dict(keep_ratio=True, scale=(
                 640,
                 640,
