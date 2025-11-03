@@ -47,17 +47,17 @@ After extracting, rename the folder "Dataset" → "coco", so the structure is:
     └── annotations_test.json
 ```
 
-4. **Preprocess**
+5. **Preprocess**
              
-1.
+a. run:
 ```bash
 python pipelines/preprocess.py
 git clone https://github.com/open-mmlab/mmdetection.git
 ```
 
-2. move car_roi_crop.py from pipelines/car_roi_crop.py to mmdetection/mmdet/datasets/transforms/car_roi_crop.py
+b. move car_roi_crop.py from pipelines/car_roi_crop.py to mmdetection/mmdet/datasets/transforms/car_roi_crop.py
 
-5. *** train ****
+6. **train**
 
 - train with rtmdet_s model integrate with Wandb
 
@@ -75,12 +75,14 @@ python /car_damage/mmdetection/tools/train.py \
 PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/mmdetection/tools/train.py /car_damage/configs/faster_rcnn_car_roi.py
 ```
 
-6. *** inference ****
+7. **inference**
+run:
 ```bash
 PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/pipelines/inference.py /car_damage/configs/inference_cfg.py
 ```
 
-7. *** benchmark ****
+8. **benchmark**
+
 a. run:
 
 ```bash
