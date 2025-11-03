@@ -1,8 +1,14 @@
 .vscode/
 models/
+results/
 viz_results/
 work_dirs/
 examples/
 tests/visual_test_crops/
 *.docx
 *.tmp
+*.jpg
+*.png
+*.zip
+*.tar.gz
+*.pth

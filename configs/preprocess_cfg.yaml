@@ -1,7 +1,6 @@
 # params
-vehicle_classes: {'bicycle': 1, 'car': 2, 'motorcycle': 3, 'bus': 5, 'truck': 7}
 score_threshold: 0.3
-device: cpu
+device: gpu
 valid_categories: [1, 2, 3, 4, 5, 6] # damages categories
 
 # paths

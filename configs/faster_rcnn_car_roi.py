@@ -17,36 +17,29 @@ custom_imports = dict(
 
 # Data settings
 data_root = '/Data/coco/'
+dataset_type = 'CocoDataset'
 
-# Model - update num_classes to match your dataset
+metainfo = dict(
+    classes=('dent', 'scratch', 'crack', 'glass shatter', 'lamp broken', 'tire flat'),
+    palette=[(220,20,60), (0,255,0), (255,0,0), (0,0,255), (255,255,0), (255,0,255)]
+)
+
+# Faster R-CNN
 model = dict(
     roi_head=dict(
-        bbox_head=dict(
-            num_classes=6  # Update based on your car damage classes
-        )
+        bbox_head=dict(num_classes=6)
     )
 )
 
+
 # CarROICrop Transform Configuration
 # Using RTMDet-x for vehicle detection, Faster R-CNN for damage detection
-car_roi_transform = dict(
-    type='CarROICrop',
-    detector_config='mmdetection/configs/rtmdet/rtmdet_x_8xb32-300e_coco.py',
-    detector_checkpoint=None,  # Auto-download
-    score_threshold=0.3,
-    padding_ratio=0.1,
-    square_crop=True,
-    min_crop_size=100,
-    device='cuda',
-    fallback_to_original=True,
-    vehicle_classes=[2, 3, 4, 6, 8]  # bicycle, car, motorcycle, bus, truck
-)
 
 # Training pipeline with CarROICrop
 train_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
-    car_roi_transform,  # Apply CarROICrop
+    dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
     dict(type='Resize', scale=(1333, 800), keep_ratio=True),
     dict(type='RandomFlip', prob=0.5),
     dict(type='PackDetInputs')
@@ -56,7 +49,7 @@ train_pipeline = [
 test_pipeline = [
     dict(type='LoadImageFromFile', backend_args=None),
     dict(type='LoadAnnotations', with_bbox=True),
-    car_roi_transform,  # Apply CarROICrop
+    dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
     dict(type='Resize', scale=(1333, 800), keep_ratio=True),
     dict(
         type='PackDetInputs',
@@ -66,10 +59,11 @@ test_pipeline = [
 
 # Dataset configuration
 train_dataloader = dict(
-    batch_size=16,  # Faster R-CNN uses smaller batch size
-    num_workers=4,
+    batch_size=2,  # Faster R-CNN uses smaller batch size
+    num_workers=2,
     dataset=dict(
         type='CocoDataset',
+        metainfo=metainfo,
         data_root=data_root,
         ann_file='annotations/annotations_train.json',
         data_prefix=dict(img='train2017/'),
@@ -79,10 +73,11 @@ train_dataloader = dict(
 )
 
 val_dataloader = dict(
-    batch_size=16,
+    batch_size=2,
     num_workers=2,
     dataset=dict(
         type='CocoDataset',
+        metainfo=metainfo,
         data_root=data_root,
         ann_file='annotations/annotations_val.json',
         data_prefix=dict(img='val2017/'),
@@ -139,10 +134,21 @@ param_scheduler = [
     )
 ]
 
-# Logging
 default_hooks = dict(
-    checkpoint=dict(type='CheckpointHook', interval=1, max_keep_ckpts=3),
+    checkpoint=dict(type='CheckpointHook', interval=10, max_keep_ckpts=3),
     logger=dict(type='LoggerHook', interval=50)
+)
+
+# Visualization backend (includes W&B)
+vis_backends = [
+    dict(type='LocalVisBackend'),
+    dict(type='WandbVisBackend')
+]
+
+visualizer = dict(
+    type='DetLocalVisualizer',
+    vis_backends=vis_backends,
+    name='visualizer'
 )
 
 # Runtime

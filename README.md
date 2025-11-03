@@ -21,12 +21,12 @@ docker build -t car_damage:v1 -f Dockerfile .
 - **Windows:**
 
 ```bash
-docker run --rm -v "$(pwd):/workspace" -v "$(pwd)/../Data/car_damage:/Data" car_damage:v1
+docker run --rm -v "$(pwd):/car_damage" -v "$(pwd)/../Data/car_damage:/Data" car_damage:v1
 ```
 
 download dataset zip from google drive.
 put it in container so you'll have 
-.../car_damage:/workspace
+.../car_damage:/car_damage
 .../Data/damage:/Data
 
 after extract the dataset zip, and rename the folder "Dataset" to "coco", so the structure is:
@@ -41,20 +41,25 @@ and the annotations are in: //Data/coco/annotations
 car_damage/                    # Project root
 ├── Dockerfile               
 ├── configs/   
-|___|__config.yaml                  # Configs
+|___|__preprocess_cfg.yaml                  # Configs
+|   |__inference_cfg.py                     # w/o loadannotations (GT)
+|   |__eval_cfg.py
 │   ├──faster_rcnn_car_roi.py                 
-│   │__rtmdet_s_car_roi.py   
+│   │__rtmdet_s_car_roi.py
+|   |__rtmdet_tiny_8xb32-300e_coco.py      # for inference cars
 ├── mmdetection/                     
 │     |__mmdet/                
 │         └── datasets/
 |                |__transforms/
 |                       |___car_roi_crop.py    # the class "on the fly"
+|     |__tools/
+|           |__train.py                     # train script
+|           |__test.py                      # evaluation script
 |
-├── pipelines/                 # main scripts
+├── pipelines/               
 │   ├── preprocess.py    
-│   └── train.py
 |   |__ inference.py
-|   |__evaluate.py  
+
 ├── tests/                  # Test suite
 │   ├── uni_preprocess.py    
 │   └── uni_train.py
@@ -63,8 +68,32 @@ car_damage/                    # Project root
 ├── utils/                  # helpers
 ├── workdirs/                 # all the runs (unuploaded to git)
 ├── requirements.txt         # Python dependencies
-└── README.md               # This file
+└── README.md              
 ```
+*** preprocess ****
+1. run pipelines/preprocess.py
+2. git clone https://github.com/open-mmlab/mmdetection.git
+3. move car_roi_crop.py from pipelines/car_roi_crop.py to mmdetection/mmdet/datasets/transforms/car_roi_crop.py
 
+*** train ****
+- train with rtmdet_s model integrate with Wandb
 
+* PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/mmdetection/tools/train.py /car_damage/configs/rtmdet_s_car_roi.py 
 
+* PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH \
+python /car_damage/mmdetection/tools/train.py \
+  /car_damage/configs/rtmdet_s_car_roi.py \
+  --launcher none \
+  --cfg-options visualizer.vis_backends.1.init_kwargs.project="car_damage_detection"
+
+- train with faster_rcnn model
+
+PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/mmdetection/tools/train.py /car_damage/configs/faster_rcnn_car_roi.py
+
+*** inference ****
+
+PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/pipelines/inference.py /car_damage/configs/inference_cfg.py
+
+*** benchmark ****
+
+PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/mmdetection/tools/test.py /car_damage/configs/eval_cfg.py
