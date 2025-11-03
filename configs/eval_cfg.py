@@ -15,15 +15,11 @@ test_pipeline = [
     dict(type='LoadAnnotations', with_bbox=True),
     dict(type='CarROICrop', vehicle_class_id=7, save_debug=False),
     dict(type='Resize', scale=(1024, 1024), keep_ratio=True),
-    dict(
-        type='Pad',
-        size_divisor=32,
-        pad_val=dict(img=(114, 114, 114))
-    ),
+    dict(type='Pad', size_divisor=32, pad_val=dict(img=(114, 114, 114))),
     dict(
         type='PackDetInputs',
         meta_keys=('img_id', 'img_path', 'ori_shape', 'img_shape', 'scale_factor', 'crop_bbox')
-    )
+    ),
 ]
 
 test_dataloader = dict(
@@ -33,17 +29,20 @@ test_dataloader = dict(
         type=dataset_type,
         metainfo=metainfo,
         data_root=data_root,
-        ann_file='annotations/annotations_val.json',
-        data_prefix=dict(img='val2017/'),
+        ann_file='annotations/annotations_test.json',
+        data_prefix=dict(img='test2017/'),
         test_mode=True,
-        pipeline=test_pipeline
-    )
+        pipeline=test_pipeline,
+    ),
 )
 
 test_evaluator = dict(
     type='CocoMetric',
-    ann_file=data_root + 'annotations/annotations_val.json',
-    metric='bbox'
+    ann_file=data_root + 'annotations/annotations_test.json',
+    metric='bbox',
+    classwise=True,         # per-class metrics
+    format_only=False,
+    outfile_prefix='work_dirs/rtmdet_s_car_roi/eval_analysis'  # save detailed outputs
 )
 
 test_cfg = dict(type='TestLoop')

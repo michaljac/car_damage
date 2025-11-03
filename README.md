@@ -95,5 +95,13 @@ PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/mmdetection/to
 PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/pipelines/inference.py /car_damage/configs/inference_cfg.py
 
 *** benchmark ****
+run: 
+1. PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH \
+python /car_damage/mmdetection/tools/test.py \
+/car_damage/configs/eval_cfg.py \
+work_dirs/rtmdet_s_car_roi/epoch_150.pth \
+--show-dir work_dirs/rtmdet_s_car_roi/eval_vis
 
-PYTHONPATH=/car_damage/mmdetection:$PYTHONPATH python /car_damage/mmdetection/tools/test.py /car_damage/configs/eval_cfg.py
+2. saving the plots
+from the benchmark step, copy the relative path of the json file and paste it in "save_plot.py" file and run:
+python pipelines/save_plot.py
